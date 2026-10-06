@@ -1,0 +1,10 @@
+target/
+.git/
+.gitignore
+.idea/
+*.iml
+.mvn/wrapper/maven-wrapper.jar
+README.md
+CLAUDE.md
+scripts/
+*.log

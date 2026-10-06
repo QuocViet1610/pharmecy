@@ -1,0 +1,22 @@
+target/
+!.mvn/wrapper/maven-wrapper.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.classpath
+.project
+.settings/
+
+# log, tạm
+*.log
+nohup.out
+
+# tuyệt đối không commit: authtoken ngrok, biến môi trường
+ngrok.yml
+.env
+scripts/ngrok-policy.yml

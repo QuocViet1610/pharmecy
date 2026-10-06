@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MediLink Checkup</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <div class="brand">
+    <strong>MediLink Checkup</strong>
+    <span class="sub">Quản lý xuyên suốt một đợt khám sức khỏe học đường</span>
+  </div>
+  <div class="dot-kham-picker">
+    <label for="dotKham">Đợt khám</label>
+    <select id="dotKham"></select>
+    <span id="trangThaiDot" class="badge"></span>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button data-tab="dot-kham" class="active">1. Đợt khám</button>
+  <button data-tab="danh-sach">2. Danh sách học sinh</button>
+  <button data-tab="chuan-bi">3. Chuẩn bị &amp; kiểm kê</button>
+  <button data-tab="ban-kham">4. Bàn khám</button>
+  <button data-tab="ket-luan">5. Bàn kết luận</button>
+  <button data-tab="bao-cao">6. Theo dõi &amp; báo cáo</button>
+</nav>
+
+<main>
+  <!-- 1 -->
+  <section id="tab-dot-kham" class="tab active">
+    <div class="grid2">
+      <div class="card">
+        <h2>Vòng đời đợt khám</h2>
+        <p class="hint">Mỗi bước chuyển là một chốt kiểm soát: lỗi bị chặn ở nơi còn sửa được.</p>
+        <ol class="flow" id="flow"></ol>
+        <div class="row">
+          <button id="btnChuanBi" class="primary">Chuẩn bị đợt khám</button>
+          <button id="btnXuatPhat">Xuất phát</button>
+          <button id="btnBatDau">Bắt đầu khám</button>
+          <button id="btnHoanThanh">Hoàn thành</button>
+        </div>
+        <pre id="dotKhamOut" class="out"></pre>
+      </div>
+      <div class="card">
+        <h2>Bàn khám đã setup</h2>
+        <p class="hint">Học sinh đi bàn nào trước cũng được — thứ tự không bị phần mềm ràng buộc.</p>
+        <table id="tblBan"><thead><tr><th>Bàn</th><th>Hạng mục</th><th>Nhân sự</th><th class="num">Lượt đã khám</th></tr></thead><tbody></tbody></table>
+        <h2 class="mt">Gói khám (hạng mục bắt buộc)</h2>
+        <div id="goiKham" class="chips"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section id="tab-danh-sach" class="tab">
+    <div class="card">
+      <h2>Nhập danh sách nhà trường bàn giao</h2>
+      <p class="hint">Dán CSV (hoặc copy từ Excel). <em>Kiểm tra</em> chỉ soi lỗi, không ghi dữ liệu —
+        mục đích là phát hiện sai sót <strong>trước ngày khám</strong>.</p>
+      <p class="hint mono">ma_dinh_danh, ho_ten, ngay_sinh (dd/MM/yyyy), gioi_tinh, lop, khoi, ho_ten_phu_huynh, dien_thoai_phu_huynh</p>
+      <div class="row">
+        <label>Trường <select id="truongId"></select></label>
+        <button id="btnMauLoi" class="ghost">Nạp file mẫu có lỗi</button>
+      </div>
+      <textarea id="csv" rows="10" spellcheck="false"></textarea>
+      <div class="row">
+        <button id="btnKiemTra" class="primary">Kiểm tra</button>
+        <button id="btnLuu">Lưu các dòng hợp lệ</button>
+      </div>
+      <div id="importTomTat" class="row stats"></div>
+      <div id="importLoi"></div>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section id="tab-chuan-bi" class="tab">
+    <div class="card">
+      <h2>Checklist nhân sự · vật tư · thiết bị</h2>
+      <p class="hint">Số lượng cần được tính từ số học sinh thực tế. Cột <em>kiểm kê</em> là số đếm lại sáng ngày khám.</p>
+      <div class="row">
+        <button id="btnLuuChecklist" class="primary">Lưu checklist</button>
+        <button id="btnKiemKe">Kiểm kê trước khi xuất phát</button>
+      </div>
+      <div id="kiemKeOut"></div>
+      <table id="tblChecklist">
+        <thead><tr><th>Loại</th><th>Tên</th><th class="num">Cần</th><th class="num">Dự phòng</th>
+          <th class="num">Phải có</th><th class="num">Đã chuẩn bị</th><th class="num">Kiểm kê</th><th class="num">Thiếu</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section id="tab-ban-kham" class="tab">
+    <div class="grid2">
+      <div class="card">
+        <h2>Nhận diện học sinh tại bàn</h2>
+        <p class="hint">Nhập mã định danh hoặc số phiếu (QR). Không cần tìm tờ phiếu giấy.</p>
+        <div class="row">
+          <input id="qKham" placeholder="HS00001 hoặc DK20261006-0001" autocomplete="off">
+          <button id="btnTraCuu" class="primary">Tra cứu</button>
+        </div>
+        <div id="phieuInfo"></div>
+      </div>
+      <div class="card">
+        <h2>Ghi kết quả</h2>
+        <div class="row">
+          <label>Bàn <select id="banKhamSelect"></select></label>
+          <label>Bác sĩ <input id="bacSi" placeholder="BS. Nguyễn A"></label>
+        </div>
+        <div id="chiSoForm" class="chi-so"></div>
+        <div class="row">
+          <label>Kết luận chuyên môn
+            <select id="ketLuanChuyenMon">
+              <option value="BINH_THUONG">Bình thường</option>
+              <option value="CAN_THEO_DOI">Cần theo dõi</option>
+              <option value="BAT_THUONG">Bất thường</option>
+            </select>
+          </label>
+        </div>
+        <textarea id="ghiChuKham" rows="2" placeholder="Ghi chú chuyên môn"></textarea>
+        <div class="row">
+          <button id="btnGhiKetQua" class="primary">Ghi vào phiếu</button>
+        </div>
+        <pre id="khamOut" class="out"></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section id="tab-ket-luan" class="tab">
+    <div class="card">
+      <h2>Bàn kết luận</h2>
+      <p class="hint">Thiếu hạng mục bắt buộc thì <strong>không kết luận được</strong> — hệ thống chỉ ra đúng bàn còn thiếu.</p>
+      <div class="row">
+        <input id="qKetLuan" placeholder="Mã định danh hoặc số phiếu" autocomplete="off">
+        <button id="btnTraCuuKetLuan" class="primary">Tra cứu</button>
+      </div>
+      <div id="ketLuanInfo"></div>
+      <div class="row">
+        <label>Phân loại sức khỏe
+          <select id="phanLoai">
+            <option value="">(theo đề xuất hệ thống)</option>
+            <option>I</option><option>II</option><option>III</option><option>IV</option><option>V</option>
+          </select>
+        </label>
+        <label>Người kết luận <input id="nguoiKetLuan" value="BS. Trưởng đoàn"></label>
+      </div>
+      <textarea id="noiDungKetLuan" rows="2" placeholder="Kết luận cuối cùng"></textarea>
+      <div class="row">
+        <button id="btnKetLuan" class="primary">Kết luận &amp; thu phiếu</button>
+      </div>
+      <pre id="ketLuanOut" class="out"></pre>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section id="tab-bao-cao" class="tab">
+    <div class="card">
+      <div class="row between">
+        <h2>Tiến độ đợt khám</h2>
+        <div class="row">
+          <button id="btnLamMoiBaoCao">Làm mới</button>
+          <a id="linkCsv" class="btn ghost" href="#">Tải CSV kết quả</a>
+        </div>
+      </div>
+      <div id="baoCaoStats" class="row stats"></div>
+      <div class="grid2">
+        <div>
+          <h3>Theo lớp</h3>
+          <table id="tblLop"><thead><tr><th>Lớp</th><th class="num">Tổng</th><th class="num">Chưa khám</th>
+            <th class="num">Đang khám</th><th class="num">Đủ hạng mục</th><th class="num">Đã kết luận</th></tr></thead><tbody></tbody></table>
+          <h3 class="mt">Tải theo bàn</h3>
+          <table id="tblTaiBan"><thead><tr><th>Bàn</th><th class="num">Đã khám</th><th class="num">Còn lại</th></tr></thead><tbody></tbody></table>
+        </div>
+        <div>
+          <h3>Phân loại sức khỏe</h3>
+          <div id="phanLoaiOut" class="chips"></div>
+          <h3 class="mt">Cần theo dõi theo hạng mục</h3>
+          <div id="canTheoDoiOut" class="chips"></div>
+          <h3 class="mt">Học sinh còn thiếu hạng mục <span class="hint">(chưa được rời khu khám)</span></h3>
+          <table id="tblConThieu"><thead><tr><th>Số phiếu</th><th>Họ tên</th><th>Lớp</th><th>Còn thiếu</th></tr></thead><tbody></tbody></table>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>

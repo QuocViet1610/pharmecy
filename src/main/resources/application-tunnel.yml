@@ -1,0 +1,11 @@
+# Profile dùng khi mở app ra Internet qua ngrok/cloudflared.
+# H2 console cho phép chạy SQL tùy ý và là vector RCE đã biết — tuyệt đối không để lộ public.
+spring:
+  h2:
+    console:
+      enabled: false
+
+logging:
+  level:
+    com.medilink.checkup: INFO
+    org.springframework.web: INFO

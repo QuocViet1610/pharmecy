@@ -1,0 +1,21 @@
+services:
+  app:
+    build: .
+    image: medilink-checkup:local
+    container_name: medilink-checkup
+    ports:
+      - "${PORT:-8099}:8099"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    volumes:
+      - medilink-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8099/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 15s
+      timeout: 3s
+      start_period: 40s
+      retries: 5
+
+volumes:
+  medilink-data:

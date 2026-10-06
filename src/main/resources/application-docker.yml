@@ -1,0 +1,18 @@
+# Profile dùng khi chạy trong container.
+# Khác bản dev: H2 lưu ra file trên volume /data nên dữ liệu không mất khi restart,
+# và H2 console bị tắt vì container thường được mở ra ngoài mạng.
+spring:
+  datasource:
+    url: jdbc:h2:file:/data/medilink;DB_CLOSE_ON_EXIT=FALSE;AUTO_SERVER=FALSE
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+  h2:
+    console:
+      enabled: false
+
+logging:
+  level:
+    com.medilink.checkup: INFO

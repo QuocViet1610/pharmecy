@@ -1,0 +1,12 @@
+# Traffic policy cho ngrok v3: chặn truy cập bằng Basic Auth.
+# ngrok v3.39 đã bỏ flag --basic-auth, cấu hình này thay thế.
+#
+# Cách dùng: copy thành scripts/ngrok-policy.yml rồi đặt mật khẩu thật.
+# File ngrok-policy.yml đã được .gitignore để mật khẩu không lên git.
+on_http_request:
+  - actions:
+      - type: basic-auth
+        config:
+          realm: MediLink Checkup demo
+          credentials:
+            - "demo:DAT_MAT_KHAU_O_DAY"
