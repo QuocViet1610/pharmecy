@@ -20,6 +20,9 @@ Nguyên tắc thiết kế lấy nguyên từ tài liệu: **lỗi phải đư�
 | Kiểm thử | 14 test nghiệp vụ, chạy bằng H2 in-memory, không cần Docker |
 | Đóng gói | Dockerfile 2 stage, non-root, ~399 MB · CI đẩy image lên GHCR |
 
+> **Chạy ở máy mới, mở demo ra Internet, hoặc gặp lỗi?**
+> Xem [HUONG-DAN-CHAY.md](HUONG-DAN-CHAY.md) — hướng dẫn vận hành chi tiết kèm bảng xử lý sự cố.
+
 ---
 
 ## Chạy nhanh
@@ -248,7 +251,7 @@ Ba profile:
 ## Mở ra Internet (demo cho người khác xem)
 
 ```bash
-# 1. cài authtoken ngrok (một lần)
+# 1. cài ngrok + authtoken (một lần cho mỗi máy)
 ngrok config add-authtoken <TOKEN>
 # 2. đặt mật khẩu Basic Auth
 cp scripts/ngrok-policy.example.yml scripts/ngrok-policy.yml   # rồi sửa mật khẩu trong đó
@@ -263,6 +266,9 @@ scripts/share-ngrok.sh
 
 > **Bắt buộc dùng profile `tunnel` hoặc `docker` khi mở ra ngoài.** Cấu hình mặc định bật H2 console
 > với user `sa` không mật khẩu — để lộ ra Internet là cho người lạ chạy SQL tùy ý.
+
+Chi tiết từng bước (cài ngrok, link đổi mỗi lần chạy, trang cảnh báo của ngrok, ba thứ không theo bạn
+sang máy khác, bảng xử lý sự cố): **[HUONG-DAN-CHAY.md](HUONG-DAN-CHAY.md)**.
 
 ---
 
