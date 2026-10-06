@@ -95,37 +95,70 @@
 
   <!-- 4 -->
   <section id="tab-ban-kham" class="tab">
-    <div class="grid2">
-      <div class="card">
-        <h2>Nhận diện học sinh tại bàn</h2>
-        <p class="hint">Nhập mã định danh hoặc số phiếu (QR). Không cần tìm tờ phiếu giấy.</p>
-        <div class="row">
-          <input id="qKham" placeholder="HS00001 hoặc DK20261006-0001" autocomplete="off">
-          <button id="btnTraCuu" class="primary">Tra cứu</button>
+    <!-- Chọn bàn + bác sĩ MỘT LẦN đầu buổi, lưu localStorage. Tránh chọn sai hạng mục 375 lần. -->
+    <div class="card" id="chonBanCard">
+      <h2>Bạn phụ trách bàn nào?</h2>
+      <p class="hint">Chọn một lần cho cả buổi. Sau đó màn hình chỉ phục vụ bàn này.</p>
+      <div id="chonBanList" class="chon-ban"></div>
+      <div class="row">
+        <label class="grow">Tên bác sĩ / người ghi
+          <input id="bacSi" placeholder="BS. Nguyễn Văn A" autocomplete="off">
+        </label>
+      </div>
+      <div class="row">
+        <button id="btnVaoBan" class="primary big" disabled>Vào bàn khám</button>
+      </div>
+    </div>
+
+    <div id="khamCard" hidden>
+      <div class="station-bar">
+        <div>
+          <span class="station-label">Bàn</span>
+          <strong id="tenBanDangTruc">—</strong>
+          <span id="bacSiDangTruc" class="station-sub"></span>
         </div>
+        <div class="row">
+          <span id="demDaGhi" class="badge muted">0 lượt phiên này</span>
+          <button id="btnDoiBan" class="ghost">Đổi bàn</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <label class="grow" for="qKham">Quét QR hoặc gõ mã / tên học sinh <span class="hint">— không cần gõ dấu</span></label>
+        <div class="row">
+          <input id="qKham" class="big-input" placeholder="HS00001  ·  DK…-0001  ·  duc long"
+                 autocomplete="off" autocapitalize="off" spellcheck="false">
+          <select id="locLop"><option value="">Mọi lớp</option></select>
+          <button id="btnTimHocSinh" class="primary">Tìm</button>
+        </div>
+        <div id="ketQuaTim"></div>
         <div id="phieuInfo"></div>
       </div>
-      <div class="card">
-        <h2>Ghi kết quả</h2>
-        <div class="row">
-          <label>Bàn <select id="banKhamSelect"></select></label>
-          <label>Bác sĩ <input id="bacSi" placeholder="BS. Nguyễn A"></label>
-        </div>
+
+      <div class="card" id="formGhiCard" hidden>
+        <h2 id="tieuDeGhi">Ghi kết quả</h2>
+        <div id="canhBaoGhiLai"></div>
         <div id="chiSoForm" class="chi-so"></div>
         <div class="row">
-          <label>Kết luận chuyên môn
-            <select id="ketLuanChuyenMon">
-              <option value="BINH_THUONG">Bình thường</option>
-              <option value="CAN_THEO_DOI">Cần theo dõi</option>
-              <option value="BAT_THUONG">Bất thường</option>
-            </select>
-          </label>
+          <button id="btnBinhThuong" class="primary big grow">✓ Bình thường — ghi &amp; sang HS tiếp</button>
         </div>
-        <textarea id="ghiChuKham" rows="2" placeholder="Ghi chú chuyên môn"></textarea>
         <div class="row">
-          <button id="btnGhiKetQua" class="primary">Ghi vào phiếu</button>
+          <button id="btnTheoDoi" class="warn-btn grow">Cần theo dõi…</button>
+          <button id="btnBatThuong" class="bad-btn grow">Bất thường…</button>
         </div>
-        <pre id="khamOut" class="out"></pre>
+        <div id="ghiChuBox" hidden>
+          <textarea id="ghiChuKham" rows="2" placeholder="Mô tả bất thường (bắt buộc)"></textarea>
+          <div class="row">
+            <button id="btnXacNhanBatThuong" class="primary">Ghi vào phiếu</button>
+            <button id="btnHuyBatThuong" class="ghost">Hủy</button>
+          </div>
+        </div>
+        <p class="hint mono">Enter: tìm / ghi bình thường · Alt+1 Bình thường · Alt+2 Theo dõi · Alt+3 Bất thường · Esc: học sinh mới</p>
+      </div>
+
+      <div class="card" id="vuaGhiCard" hidden>
+        <h3>Vừa ghi ở bàn này</h3>
+        <table id="tblVuaGhi"><tbody></tbody></table>
       </div>
     </div>
   </section>

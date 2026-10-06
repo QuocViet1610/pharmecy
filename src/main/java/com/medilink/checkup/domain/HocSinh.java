@@ -1,5 +1,6 @@
 package com.medilink.checkup.domain;
 
+import com.medilink.checkup.service.ChuanHoaText;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 
@@ -21,6 +22,10 @@ public class HocSinh {
 
     @Column(nullable = false)
     private String hoTen;
+
+    /** Bản không dấu, chữ thường của {@link #hoTen} — chỉ dùng để tìm kiếm. */
+    @Column(name = "ho_ten_tim_kiem")
+    private String hoTenTimKiem;
 
     @Column(nullable = false)
     private LocalDate ngaySinh;
@@ -46,6 +51,7 @@ public class HocSinh {
         this.truong = truong;
         this.maDinhDanh = maDinhDanh;
         this.hoTen = hoTen;
+        this.hoTenTimKiem = ChuanHoaText.boDau(hoTen);
         this.ngaySinh = ngaySinh;
         this.gioiTinh = gioiTinh;
         this.lop = lop;
@@ -58,6 +64,7 @@ public class HocSinh {
     public Truong getTruong() { return truong; }
     public String getMaDinhDanh() { return maDinhDanh; }
     public String getHoTen() { return hoTen; }
+    public String getHoTenTimKiem() { return hoTenTimKiem; }
     public LocalDate getNgaySinh() { return ngaySinh; }
     public GioiTinh getGioiTinh() { return gioiTinh; }
     public String getLop() { return lop; }

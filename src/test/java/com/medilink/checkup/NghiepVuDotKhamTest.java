@@ -160,6 +160,42 @@ class NghiepVuDotKhamTest {
                 .hasMessageContaining("chưa ghi kết quả được");
     }
 
+    /* ---------- Nhận diện học sinh tại bàn: quên mã không được làm nghẽn hàng ---------- */
+
+    @Test
+    void tim_hoc_sinh_bang_ma_so_phieu_va_ten_khong_dau() {
+        DotKhamView dot = moDotKham();
+
+        // quét QR / gõ đúng mã → đúng một kết quả
+        assertThat(khamService.tim(dot.ma(), "T001", null, 20))
+                .singleElement().extracting(TienDoPhieu::hoTen).isEqualTo("Nguyễn Văn A");
+
+        // số phiếu cũng ra đúng một kết quả
+        String soPhieu = khamService.traCuu(dot.ma(), "T002").soPhieu();
+        assertThat(khamService.tim(dot.ma(), soPhieu, null, 20)).hasSize(1);
+
+        // gõ tên KHÔNG DẤU vẫn tìm được — trên tablet gõ dấu rất chậm
+        assertThat(khamService.tim(dot.ma(), "nguyen van a", null, 20))
+                .singleElement().extracting(TienDoPhieu::hoTen).isEqualTo("Nguyễn Văn A");
+        assertThat(khamService.tim(dot.ma(), "tran thi b", null, 20)).hasSize(1);
+
+        // gõ một phần tên có dấu cũng được
+        assertThat(khamService.tim(dot.ma(), "Trần", null, 20)).hasSize(1);
+    }
+
+    @Test
+    void tim_hoc_sinh_loc_theo_lop_va_chan_tu_khoa_qua_ngan() {
+        DotKhamView dot = moDotKham();
+
+        assertThat(khamService.tim(dot.ma(), "nguyen", "6A1", 20)).hasSize(1);
+        assertThat(khamService.tim(dot.ma(), "nguyen", "6A9", 20)).isEmpty();
+        assertThat(khamService.tim(dot.ma(), "khong-ai-ten-nay", null, 20)).isEmpty();
+
+        assertThatThrownBy(() -> khamService.tim(dot.ma(), "a", null, 20))
+                .isInstanceOf(ApiException.class)
+                .hasMessageContaining("ít nhất 2 ký tự");
+    }
+
     /* ---------- Điểm đau #6: chặn kết luận khi thiếu hạng mục ---------- */
 
     @Test

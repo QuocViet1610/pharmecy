@@ -31,8 +31,12 @@ chiếm nên project này dùng 8099.
   phương thức nghiệp vụ (`chuyenTrangThai`, `ketLuan`, `kiemKe`...).
 - `chuanBi()` phải idempotent: nhà trường bổ sung học sinh muộn thì chạy lại chỉ sinh phiếu còn thiếu
   và cập nhật lại định mức checklist.
-- Thêm hạng mục khám = thêm hằng vào enum `HangMuc` kèm `chiSoGoiY`; UI tự dựng form từ
-  `GET /api/v1/dot-kham/hang-muc`, không cần sửa JS.
+- Thêm hạng mục khám = thêm hằng vào enum `HangMuc` kèm danh sách `ChiSo` (nhãn, kiểu `so`/`text`,
+  giá trị ví dụ); UI tự dựng form từ `GET /api/v1/dot-kham/hang-muc`, **không sửa JS**.
+- Tab 4 là đường nóng (~375 lượt nhập/đợt). Mọi thay đổi ở đó phải giữ: bàn trực chọn một lần,
+  ô tìm luôn được focus, ghi xong tự dọn và quay về ô tìm, và một nút ghi "bình thường" trong 1 click.
+- `HocSinh.hoTenTimKiem` là bản không dấu của `hoTen`, set trong constructor qua `ChuanHoaText.boDau`.
+  Sửa tên học sinh ở đâu thì phải cập nhật lại cột này, nếu không tìm không dấu sẽ ra sai.
 
 ## Bảo mật khi mở ra ngoài
 

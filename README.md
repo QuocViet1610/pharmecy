@@ -77,9 +77,31 @@ JAVA_HOME=~/.jdks/ms-21.0.11 ./mvnw spring-boot:run -Dspring-boot.run.profiles=t
 | 1. Đợt khám | Điều phối viên | Vòng đời đợt khám, bàn khám đã setup, gói khám |
 | 2. Danh sách học sinh | Cán bộ nhận danh sách | Dán CSV, soi lỗi trước ngày khám, lưu dòng hợp lệ |
 | 3. Chuẩn bị & kiểm kê | Người chuẩn bị vật tư | Checklist nhân sự/vật tư/thiết bị, kiểm kê trước xuất phát |
-| 4. Bàn khám | Bác sĩ tại bàn | Nhận diện học sinh, ghi kết quả chuyên môn |
+| 4. Bàn khám | Bác sĩ tại bàn | Chọn bàn trực 1 lần, quét/tìm học sinh, ghi kết quả 1 click |
 | 5. Bàn kết luận | Người phụ trách kết luận | Chặn thiếu hạng mục, phân loại sức khỏe |
 | 6. Theo dõi & báo cáo | Trưởng đoàn | Tiến độ theo lớp/bàn, danh sách còn thiếu, xuất CSV |
+
+## Tab 4 — màn hình được tối ưu riêng
+
+Một đợt 75 học sinh × 5 bàn = **~375 lượt nhập**, giữa sân trường, học sinh xếp hàng chờ.
+Mỗi động tác dư ở đây bị nhân lên 375 lần, nên luồng được gói lại thành:
+**quét/gõ → Enter → một nút "Bình thường" → tự sang học sinh kế tiếp.**
+
+- **Chọn bàn trực một lần cho cả buổi**, nhớ trong `localStorage`. Màn hình sau đó chỉ phục vụ
+  bàn đó nên không thể ghi nhầm sang hạng mục khác. Thanh màu đậm trên cùng luôn hiển thị đang trực bàn nào.
+- **Tìm học sinh không cần gõ dấu**: `duc long` ra `Nguyễn Đức Long`. Học sinh quên mã hoặc mất phiếu
+  không còn làm nghẽn hàng chờ. Nhiều kết quả thì bấm số `1..9` để chọn. Lọc thêm theo lớp.
+- **Một nút lớn "✓ Bình thường — ghi & sang HS tiếp"** cho ~85% ca. Ca cần theo dõi / bất thường mới
+  mở ô mô tả, và *bắt buộc* mô tả khi chọn bất thường — bàn kết luận cần thông tin đó.
+- **Cảnh báo khi ghi lại**: bàn đã ghi cho em này rồi thì hiện giờ ghi, kết luận cũ và điền sẵn
+  giá trị cũ, nói rõ "ghi tiếp là sửa kết quả" — không ghi đè âm thầm.
+- **Nhật ký lượt vừa ghi** (8 lượt gần nhất) để bác sĩ tự đối chiếu khi bị ngắt giữa buổi.
+- **Phím tắt**: `Enter` tìm / ghi bình thường · `Alt+1/2/3` ba mức kết luận · `Esc` sang học sinh mới.
+- **Chạy tốt cả tablet và laptop**: vùng chạm ≥44px, `inputmode` số cho chỉ số số (chiều cao, cân nặng,
+  mạch), một cột khi màn hẹp, bỏ hiệu ứng hover trên thiết bị cảm ứng.
+
+Form chỉ số **do backend mô tả**, UI không hardcode: `GET /api/v1/dot-kham/hang-muc` trả nhãn,
+kiểu (`so`/`text`) và giá trị ví dụ cho từng chỉ số. Thêm hạng mục mới chỉ cần sửa enum `HangMuc`.
 
 ## Nguyên tắc nghiệp vụ được giữ nguyên
 
@@ -129,7 +151,8 @@ GET    /api/v1/dot-kham/{ma}/checklist | PUT     cập nhật số đã chuẩn 
 GET    /api/v1/dot-kham/{ma}/kiem-ke
 POST   /api/v1/dot-kham/{ma}/xuat-phat | /bat-dau-kham | /hoan-thanh
 
-GET    /api/v1/dot-kham/{ma}/tra-cuu?q=          mã định danh hoặc số phiếu
+GET    /api/v1/dot-kham/{ma}/tra-cuu?q=          khớp chính xác mã định danh hoặc số phiếu
+GET    /api/v1/dot-kham/{ma}/tim?q=&lop=&gioiHan= tìm theo mã, số phiếu hoặc TÊN (không cần dấu)
 POST   /api/v1/dot-kham/{ma}/ket-qua             ghi kết quả một bàn (thứ tự bất kỳ)
 GET    /api/v1/dot-kham/{ma}/tien-do?lop=&conThieu=
 POST   /api/v1/dot-kham/{ma}/ket-luan

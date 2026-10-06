@@ -122,3 +122,69 @@ table input { width: 80px; padding: 4px 6px; text-align: right; }
 }
 #toast div.bad { background: var(--bad); }
 #toast div.ok { background: var(--ok); }
+
+/* ===== Bàn khám: màn hình dùng nhiều nhất, tối ưu cho cả cảm ứng và bàn phím ===== */
+
+/* Vùng chạm tối thiểu 44px — đủ cho ngón tay nhưng không quá to trên laptop. */
+button, .btn, input, select { min-height: 44px; }
+button.big { min-height: 56px; font-size: 16px; }
+.grow { flex: 1 1 220px; }
+label.grow { flex-direction: column; align-items: stretch; gap: 4px; }
+
+.big-input { flex: 1 1 260px; font-size: 19px; padding: 12px 14px; letter-spacing: .3px; }
+
+/* Chọn bàn trực: thẻ lớn, bấm một lần đầu buổi. */
+.chon-ban { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin: 12px 0; }
+.chon-ban-item {
+  display: flex; flex-direction: column; gap: 3px; align-items: flex-start;
+  padding: 14px 16px; min-height: 76px; text-align: left; border: 2px solid var(--line); background: #fff;
+}
+.chon-ban-item strong { font-size: 16px; }
+.chon-ban-item span { font-size: 12.5px; color: var(--muted); }
+.chon-ban-item.active { border-color: var(--accent); background: var(--accent-soft); }
+
+/* Thanh cố định cho biết đang trực bàn nào — chống ghi sai hạng mục. */
+.station-bar {
+  display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center;
+  background: var(--accent); color: #fff; border-radius: 10px; padding: 12px 16px; margin-bottom: 14px;
+}
+.station-bar strong { font-size: 18px; }
+.station-label { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; opacity: .8; display: block; }
+.station-sub { font-size: 13px; opacity: .9; margin-left: 6px; }
+.station-bar button { background: rgba(255, 255, 255, .15); border-color: rgba(255, 255, 255, .35); color: #fff; }
+.station-bar button:hover { background: rgba(255, 255, 255, .28); }
+.station-bar .badge { background: rgba(255, 255, 255, .18); color: #fff; }
+
+/* Nhiều học sinh trùng tên: chọn bằng chuột hoặc bấm số. */
+.ds-chon { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
+.ds-chon-item {
+  display: flex; align-items: center; gap: 12px; padding: 10px 14px; text-align: left; width: 100%;
+}
+.ds-chon-item .stt {
+  flex: 0 0 28px; height: 28px; border-radius: 6px; background: var(--accent-soft); color: var(--accent);
+  display: grid; place-items: center; font-weight: 700; font-size: 13px;
+}
+.ds-chon-item span:nth-child(2) { flex: 1; display: flex; flex-direction: column; }
+.ds-chon-item small { color: var(--muted); font-size: 12px; }
+
+button.warn-btn { background: var(--warn-soft); border-color: #ecd7a4; color: var(--warn); font-weight: 600; }
+button.bad-btn { background: var(--bad-soft); border-color: #f3c3bf; color: var(--bad); font-weight: 600; }
+button.warn-btn:hover { filter: brightness(.97); }
+button.bad-btn:hover { filter: brightness(.97); }
+
+#tblVuaGhi td { font-size: 13px; }
+
+/* Màn hẹp (tablet dọc, điện thoại): một cột, không bảng ngang. */
+@media (max-width: 640px) {
+  main { padding: 12px; }
+  .card { padding: 14px; }
+  .chi-so { grid-template-columns: 1fr; }
+  .big-input { font-size: 17px; }
+  nav.tabs { overflow-x: auto; flex-wrap: nowrap; }
+  nav.tabs button { white-space: nowrap; }
+}
+
+/* Thiết bị cảm ứng: bỏ hiệu ứng hover vì nó bị "dính" sau khi chạm. */
+@media (hover: none) {
+  button:hover, .btn:hover, .chon-ban-item:hover { background: inherit; filter: none; }
+}

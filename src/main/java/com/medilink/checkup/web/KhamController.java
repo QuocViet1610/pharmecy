@@ -26,6 +26,15 @@ public class KhamController {
         return khamService.traCuu(ma, q);
     }
 
+    /** Tìm học sinh theo mã, số phiếu hoặc tên (không cần gõ dấu). Trả danh sách để UI chọn. */
+    @GetMapping("/tim")
+    public List<TienDoPhieu> tim(@PathVariable String ma,
+                                 @RequestParam("q") String q,
+                                 @RequestParam(required = false) String lop,
+                                 @RequestParam(defaultValue = "20") int gioiHan) {
+        return khamService.tim(ma, q, lop, gioiHan);
+    }
+
     /** Ghi kết quả tại một bàn — gọi được theo thứ tự bất kỳ. */
     @PostMapping("/ket-qua")
     public TienDoPhieu ghiKetQua(@PathVariable String ma, @Valid @RequestBody GhiKetQuaRequest req) {

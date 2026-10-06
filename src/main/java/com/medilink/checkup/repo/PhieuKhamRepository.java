@@ -28,6 +28,25 @@ public interface PhieuKhamRepository extends JpaRepository<PhieuKham, Long> {
             """)
     List<PhieuKham> findByDotKham(Long dotKhamId);
 
+    /**
+     * Tìm học sinh tại bàn khám: khớp chính xác mã định danh/số phiếu (quét QR),
+     * hoặc khớp một phần tên — cả khi người dùng không gõ dấu.
+     */
+    @Query("""
+            select p from PhieuKham p
+              join fetch p.hocSinh hs
+            where p.dotKham.id = :dotKhamId
+              and (
+                    lower(hs.maDinhDanh) = :q
+                 or lower(p.soPhieu) = :q
+                 or lower(hs.hoTen) like concat('%', :q, '%')
+                 or hs.hoTenTimKiem like concat('%', :qKhongDau, '%')
+              )
+              and (:lop is null or lower(hs.lop) = :lop)
+            order by hs.lop, hs.hoTen
+            """)
+    List<PhieuKham> tim(Long dotKhamId, String q, String qKhongDau, String lop);
+
     long countByDotKhamId(Long dotKhamId);
 
     long countByDotKhamIdAndTrangThai(Long dotKhamId, TrangThaiPhieu trangThai);

@@ -2,30 +2,44 @@ package com.medilink.checkup.domain;
 
 import java.util.List;
 
-/**
- * Hạng mục khám = một bàn/trạm khám trong khu khám.
- * {@code goiY} là các chỉ số bàn đó thường ghi — UI dùng để dựng form, không ràng buộc cứng.
- */
+/** Hạng mục khám = một bàn/trạm khám trong khu khám, kèm các chỉ số bàn đó thường ghi. */
 public enum HangMuc {
-    THE_LUC("Thể lực", List.of("chieuCao", "canNang")),
-    MAT("Mắt", List.of("thiLucPhai", "thiLucTrai")),
-    TMH("Tai - Mũi - Họng", List.of("tai", "mui", "hong")),
-    RHM("Răng - Hàm - Mặt", List.of("rang", "ham")),
-    NOI_NHI("Nội / Nhi", List.of("huyetAp", "mach", "tim", "phoi"));
+    THE_LUC("Thể lực", List.of(
+            ChiSo.so("chieuCao", "Chiều cao (cm)", "138"),
+            ChiSo.so("canNang", "Cân nặng (kg)", "32"))),
+
+    MAT("Mắt", List.of(
+            ChiSo.text("thiLucPhai", "Thị lực mắt phải", "10/10"),
+            ChiSo.text("thiLucTrai", "Thị lực mắt trái", "10/10"))),
+
+    TMH("Tai - Mũi - Họng", List.of(
+            ChiSo.text("tai", "Tai", "bình thường"),
+            ChiSo.text("mui", "Mũi", "bình thường"),
+            ChiSo.text("hong", "Họng", "bình thường"))),
+
+    RHM("Răng - Hàm - Mặt", List.of(
+            ChiSo.text("rang", "Răng", "không sâu"),
+            ChiSo.text("ham", "Hàm, khớp", "bình thường"))),
+
+    NOI_NHI("Nội / Nhi", List.of(
+            ChiSo.text("huyetAp", "Huyết áp (mmHg)", "100/60"),
+            ChiSo.so("mach", "Mạch (lần/phút)", "85"),
+            ChiSo.text("tim", "Tim", "bình thường"),
+            ChiSo.text("phoi", "Phổi", "bình thường")));
 
     private final String tenHienThi;
-    private final List<String> goiY;
+    private final List<ChiSo> chiSo;
 
-    HangMuc(String tenHienThi, List<String> goiY) {
+    HangMuc(String tenHienThi, List<ChiSo> chiSo) {
         this.tenHienThi = tenHienThi;
-        this.goiY = goiY;
+        this.chiSo = chiSo;
     }
 
     public String getTenHienThi() {
         return tenHienThi;
     }
 
-    public List<String> getGoiY() {
-        return goiY;
+    public List<ChiSo> getChiSo() {
+        return chiSo;
     }
 }

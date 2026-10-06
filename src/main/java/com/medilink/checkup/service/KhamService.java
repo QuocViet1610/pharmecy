@@ -91,6 +91,25 @@ public class KhamService {
         return banRepo.findByDotKhamIdAndHangMuc(dotKham.getId(), req.hangMuc()).stream().findFirst().orElse(null);
     }
 
+    /**
+     * Tìm học sinh ở bàn khám. Quét QR / gõ đúng mã → đúng một kết quả, UI mở luôn phiếu.
+     * Gõ tên (không cần dấu) → nhiều kết quả, UI cho chọn. Học sinh quên mã không còn
+     * làm nghẽn hàng chờ.
+     */
+    @Transactional(readOnly = true)
+    public List<TienDoPhieu> tim(String maDotKham, String tuKhoa, String lop, int gioiHan) {
+        DotKham dotKham = dotKhamService.timTheoMa(maDotKham);
+        String q = tuKhoa == null ? "" : tuKhoa.trim().toLowerCase();
+        if (q.length() < 2) {
+            throw ApiException.badRequest("TU_KHOA_QUA_NGAN", "Nhập ít nhất 2 ký tự để tìm");
+        }
+        return phieuRepo.tim(dotKham.getId(), q, ChuanHoaText.boDau(q),
+                        lop == null || lop.isBlank() ? null : lop.trim().toLowerCase()).stream()
+                .limit(gioiHan)
+                .map(this::tienDo)
+                .toList();
+    }
+
     @Transactional(readOnly = true)
     public TienDoPhieu tienDoTheoSoPhieu(String soPhieu) {
         PhieuKham phieu = phieuRepo.findBySoPhieu(soPhieu)

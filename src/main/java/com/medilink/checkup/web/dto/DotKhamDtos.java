@@ -32,9 +32,9 @@ public final class DotKhamDtos {
             String ghiChu
     ) {}
 
-    public record HangMucView(String ma, String ten, List<String> chiSoGoiY) {
+    public record HangMucView(String ma, String ten, List<ChiSo> chiSo) {
         public static HangMucView cua(HangMuc hm) {
-            return new HangMucView(hm.name(), hm.getTenHienThi(), hm.getGoiY());
+            return new HangMucView(hm.name(), hm.getTenHienThi(), hm.getChiSo());
         }
     }
 

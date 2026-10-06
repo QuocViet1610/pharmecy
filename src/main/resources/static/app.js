@@ -1,7 +1,18 @@
 'use strict';
 
 const API = '/api/v1';
-const state = { dotKham: null, truongId: null, hangMuc: [], banKham: [], phieu: null };
+const state = {
+  dotKham: null, truongId: null, hangMuc: [], banKham: [], phieu: null,
+  ban: null,        // bàn đang trực (chọn 1 lần/buổi, nhớ trong localStorage)
+  bacSi: '',
+  daGhiPhien: [],   // nhật ký các lượt vừa ghi, để bác sĩ tự đối chiếu
+};
+
+/** localStorage có thể bị chặn (chế độ riêng tư) — không để vỡ UI. */
+const nho = {
+  doc(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  ghi(k, v) { try { localStorage.setItem(k, v); } catch { /* bỏ qua */ } },
+};
 
 /* ---------- helpers ---------- */
 
@@ -105,7 +116,11 @@ async function khoiTao() {
   el('truongId').innerHTML = truong
     .map((t) => `<option value="${t.id}">${esc(t.ten)} — ${t.soHocSinh} HS</option>`).join('');
   state.truongId = truong[0]?.id ?? null;
-  el('truongId').onchange = (e) => { state.truongId = Number(e.target.value); };
+  state.lop = truong[0]?.lop ?? [];
+  el('truongId').onchange = (e) => {
+    state.truongId = Number(e.target.value);
+    state.lop = truong.find((t) => t.id === state.truongId)?.lop ?? [];
+  };
 
   const ds = await get('/dot-kham');
   el('dotKham').innerHTML = ds
@@ -153,9 +168,13 @@ async function veBanKham() {
   $('#tblBan tbody').innerHTML = state.banKham.map((b) =>
     `<tr><td>${esc(b.ten)}</td><td>${esc(b.tenHangMuc)}</td><td>${esc(b.nhanSu ?? '—')}</td>
      <td class="num">${b.soLuotDaKham}</td></tr>`).join('');
-  el('banKhamSelect').innerHTML = state.banKham
-    .map((b) => `<option value="${b.id}" data-hang-muc="${esc(b.hangMuc)}">${esc(b.ten)}</option>`).join('');
-  veChiSoForm();
+  // Đang trực bàn nào thì giữ nguyên, chưa chọn thì hiện màn hình chọn bàn.
+  if (state.ban) {
+    const moi = state.banKham.find((b) => b.id === state.ban.id);
+    if (moi) state.ban = moi;
+  } else {
+    phucHoiBan();
+  }
 }
 
 async function buoc(url, nhan) {
@@ -265,66 +284,247 @@ el('btnKiemKe').onclick = async () => {
 };
 
 /* ---------- 4. bàn khám ---------- */
+/* Đây là màn hình được dùng nhiều nhất: 75 học sinh x 5 bàn = ~375 lượt nhập mỗi đợt.
+   Mọi động tác dư ở đây đều bị nhân lên 375 lần, nên luồng được gói lại thành:
+   quét/gõ -> Enter -> (đa số) một nút "Bình thường" -> tự sang học sinh kế tiếp. */
 
-function hangMucDangChon() {
-  return el('banKhamSelect').selectedOptions[0]?.dataset.hangMuc;
+const KHOA_BAN = 'medilink.ban';
+const KHOA_BACSI = 'medilink.bacSi';
+
+function veChonBan() {
+  el('chonBanList').innerHTML = state.banKham.map((b) => `
+    <button class="chon-ban-item" data-id="${b.id}">
+      <strong>${esc(b.tenHangMuc)}</strong>
+      <span>${esc(b.ten)}</span>
+    </button>`).join('');
+
+  let chon = null;
+  el('chonBanList').querySelectorAll('.chon-ban-item').forEach((btn) => {
+    btn.onclick = () => {
+      chon = Number(btn.dataset.id);
+      el('chonBanList').querySelectorAll('.chon-ban-item')
+        .forEach((x) => x.classList.toggle('active', x === btn));
+      el('btnVaoBan').disabled = false;
+    };
+  });
+
+  el('bacSi').value = nho.doc(KHOA_BACSI) || '';
+  el('btnVaoBan').onclick = () => {
+    const ban = state.banKham.find((b) => b.id === chon);
+    if (ban) vaoBan(ban, el('bacSi').value.trim());
+  };
+}
+
+function vaoBan(ban, bacSi) {
+  state.ban = ban;
+  state.bacSi = bacSi;
+  nho.ghi(KHOA_BAN, String(ban.id));
+  nho.ghi(KHOA_BACSI, bacSi);
+
+  el('chonBanCard').hidden = true;
+  el('khamCard').hidden = false;
+  el('tenBanDangTruc').textContent = `${ban.tenHangMuc} — ${ban.ten}`;
+  el('bacSiDangTruc').textContent = bacSi ? '· ' + bacSi : '';
+  el('tieuDeGhi').textContent = 'Ghi kết quả ' + ban.tenHangMuc;
+
+  el('locLop').innerHTML = '<option value="">Mọi lớp</option>'
+    + (state.lop ?? []).map((l) => `<option>${esc(l)}</option>`).join('');
+
+  veChiSoForm();
+  hocSinhMoi();
+}
+
+el('btnDoiBan').onclick = () => {
+  state.ban = null;
+  el('khamCard').hidden = true;
+  el('chonBanCard').hidden = false;
+  el('btnVaoBan').disabled = true;
+  veChonBan();
+};
+
+/** Khôi phục bàn đã chọn ở phiên trước, để F5 không phải chọn lại. */
+function phucHoiBan() {
+  const id = Number(nho.doc(KHOA_BAN));
+  const ban = state.banKham.find((b) => b.id === id);
+  if (ban) vaoBan(ban, nho.doc(KHOA_BACSI) || '');
+  else { el('khamCard').hidden = true; el('chonBanCard').hidden = false; veChonBan(); }
 }
 
 function veChiSoForm() {
-  const hm = state.hangMuc.find((h) => h.ma === hangMucDangChon());
-  el('chiSoForm').innerHTML = (hm?.chiSoGoiY ?? [])
-    .map((c) => `<label>${esc(c)}<input data-chi-so="${esc(c)}" autocomplete="off"></label>`).join('');
+  const hm = state.hangMuc.find((h) => h.ma === state.ban?.hangMuc);
+  el('chiSoForm').innerHTML = (hm?.chiSo ?? []).map((c) => `
+    <label>${esc(c.nhan)}
+      <input data-chi-so="${esc(c.ma)}" placeholder="${esc(c.vd)}" autocomplete="off"
+             ${c.kieu === 'so' ? 'inputmode="decimal"' : ''}>
+    </label>`).join('');
 }
 
-el('banKhamSelect').onchange = veChiSoForm;
-
-function vePhieu(t, dich) {
-  const daKham = t.daKham.map((k) =>
-    `<span class="badge ok" title="${esc(k.banKham ?? '')} ${esc(k.bacSi ?? '')}">${esc(k.tenHangMuc)}: ${esc(k.ketLuanChuyenMon)}</span>`).join(' ');
-  const thieu = t.conThieu.map((h) => `<span class="badge bad">${esc(h.ten)}</span>`).join(' ');
-  el(dich).innerHTML = `
-    <div class="alert ${t.duHangMuc ? 'ok' : 'warn'}">
-      <strong>${esc(t.hoTen)}</strong> · ${esc(t.lop)} · ${esc(t.maDinhDanh)} · phiếu ${esc(t.soPhieu)}
-      ${badgeTrangThai(t.trangThai)}
-      <div class="chips" style="margin-top:8px">${daKham || '<span class="badge muted">chưa khám bàn nào</span>'}</div>
-      ${t.conThieu.length
-        ? `<div style="margin-top:8px">Còn thiếu: <span class="chips">${thieu}</span></div>`
-        : `<div style="margin-top:8px">Đủ hạng mục — hệ thống đề xuất phân loại
-            <strong>${esc(t.phanLoaiDeXuat ?? '—')}</strong></div>`}
-      ${t.ketLuan ? `<div style="margin-top:8px">Kết luận: ${esc(t.ketLuan)} (${esc(t.nguoiKetLuan)})</div>` : ''}
-    </div>`;
-  state.phieu = t;
+/** Dọn màn hình để đón học sinh tiếp theo và đưa con trỏ về ô quét. */
+function hocSinhMoi() {
+  state.phieu = null;
+  el('qKham').value = '';
+  el('ketQuaTim').innerHTML = '';
+  el('phieuInfo').innerHTML = '';
+  el('canhBaoGhiLai').innerHTML = '';
+  el('formGhiCard').hidden = true;
+  el('ghiChuBox').hidden = true;
+  el('ghiChuKham').value = '';
+  document.querySelectorAll('#chiSoForm input').forEach((i) => { i.value = ''; });
+  el('qKham').focus();
 }
 
-el('btnTraCuu').onclick = async () => {
+async function timHocSinh() {
+  const q = el('qKham').value.trim();
+  if (q.length < 2) { toast('Nhập ít nhất 2 ký tự', 'bad'); return; }
+  const lop = el('locLop').value;
   try {
-    vePhieu(await get(`/dot-kham/${state.dotKham.ma}/tra-cuu?q=${encodeURIComponent(el('qKham').value)}`), 'phieuInfo');
-  } catch (e) { loi(e, 'khamOut'); el('phieuInfo').innerHTML = ''; }
-};
-el('qKham').onkeydown = (e) => { if (e.key === 'Enter') el('btnTraCuu').click(); };
+    const ds = await get(`/dot-kham/${state.dotKham.ma}/tim?q=${encodeURIComponent(q)}`
+      + (lop ? `&lop=${encodeURIComponent(lop)}` : ''));
+    if (ds.length === 0) {
+      el('ketQuaTim').innerHTML = `<div class="alert bad">Không tìm thấy "${esc(q)}".
+        Thử gõ tên không dấu, hoặc bỏ lọc lớp.</div>`;
+      el('formGhiCard').hidden = true;
+      return;
+    }
+    if (ds.length === 1) { chonPhieu(ds[0]); return; }
+    // Nhiều kết quả: cho chọn bằng chuột hoặc bấm số 1..9.
+    el('ketQuaTim').innerHTML = `<div class="hint">${ds.length} học sinh trùng khớp — chọn một
+      (hoặc bấm số):</div><div class="ds-chon">` + ds.map((t, i) => `
+      <button class="ds-chon-item" data-i="${i}">
+        <span class="stt">${i + 1}</span>
+        <span><strong>${esc(t.hoTen)}</strong><small>${esc(t.lop)} · ${esc(t.maDinhDanh)}</small></span>
+        ${t.duHangMuc ? '<span class="badge ok">đủ hạng mục</span>'
+          : `<span class="badge warn">còn ${t.conThieu.length} bàn</span>`}
+      </button>`).join('') + '</div>';
+    el('ketQuaTim').querySelectorAll('.ds-chon-item').forEach((btn) => {
+      btn.onclick = () => chonPhieu(ds[Number(btn.dataset.i)]);
+    });
+    state.ketQuaTim = ds;
+    el('phieuInfo').innerHTML = '';
+    el('formGhiCard').hidden = true;
+  } catch (e) { loi(e); }
+}
 
-el('btnGhiKetQua').onclick = async () => {
+function chonPhieu(t) {
+  state.ketQuaTim = null;
+  el('ketQuaTim').innerHTML = '';
+  vePhieu(t, 'phieuInfo');
+
+  if (t.trangThai === 'DA_KET_LUAN') {
+    el('canhBaoGhiLai').innerHTML = `<div class="alert bad">Phiếu đã kết luận và thu lại —
+      không ghi thêm được.</div>`;
+    el('formGhiCard').hidden = true;
+    return;
+  }
+
+  el('formGhiCard').hidden = false;
+  // Bàn này đã ghi cho em rồi: nói rõ đây là SỬA, kèm giá trị cũ, tránh ghi đè mà không biết.
+  const daCo = t.daKham.find((k) => k.hangMuc === state.ban.hangMuc);
+  if (daCo) {
+    el('canhBaoGhiLai').innerHTML = `<div class="alert warn">Bàn này <strong>đã ghi</strong> cho em
+      lúc ${new Date(daCo.thoiDiem).toLocaleTimeString('vi-VN')}
+      (${esc(daCo.ketLuanChuyenMon)}${daCo.bacSi ? ', ' + esc(daCo.bacSi) : ''}).
+      Ghi tiếp là <strong>sửa kết quả cũ</strong>.</div>`;
+    Object.entries(daCo.chiTiet ?? {}).forEach(([k, v]) => {
+      const i = document.querySelector(`#chiSoForm input[data-chi-so="${k}"]`);
+      if (i) i.value = v;
+    });
+    el('ghiChuKham').value = daCo.ghiChu ?? '';
+  } else {
+    el('canhBaoGhiLai').innerHTML = '';
+  }
+  el('chiSoForm').querySelector('input')?.focus();
+}
+
+async function ghiKetQua(ketLuanChuyenMon) {
+  if (!state.phieu) { toast('Chưa chọn học sinh', 'bad'); return; }
   const chiTiet = {};
-  document.querySelectorAll('#chiSoForm input').forEach((i) => { if (i.value) chiTiet[i.dataset.chiSo] = i.value; });
+  document.querySelectorAll('#chiSoForm input').forEach((i) => {
+    if (i.value.trim()) chiTiet[i.dataset.chiSo] = i.value.trim();
+  });
   const body = {
-    maNhanDien: el('qKham').value.trim(),
-    hangMuc: hangMucDangChon(),
-    banKhamId: Number(el('banKhamSelect').value),
-    bacSi: el('bacSi').value || null,
-    ketLuanChuyenMon: el('ketLuanChuyenMon').value,
+    maNhanDien: state.phieu.soPhieu,
+    hangMuc: state.ban.hangMuc,
+    banKhamId: state.ban.id,
+    bacSi: state.bacSi || null,
+    ketLuanChuyenMon,
     chiTiet,
-    ghiChu: el('ghiChuKham').value || null,
+    ghiChu: el('ghiChuKham').value.trim() || null,
   };
   try {
     const t = await post(`/dot-kham/${state.dotKham.ma}/ket-qua`, body);
-    vePhieu(t, 'phieuInfo');
-    el('khamOut').textContent = `Đã ghi ${body.hangMuc} cho ${t.hoTen}. ` +
-      (t.duHangMuc ? 'Đủ hạng mục → mời sang bàn kết luận.' : `Còn thiếu: ${t.conThieu.map((h) => h.ten).join(', ')}`);
-    document.querySelectorAll('#chiSoForm input').forEach((i) => { i.value = ''; });
-    el('ghiChuKham').value = '';
-    await veBanKham();
-  } catch (e) { loi(e, 'khamOut'); }
+    themVaoNhatKy(t, ketLuanChuyenMon);
+    toast(`${t.hoTen}: đã ghi ${state.ban.tenHangMuc}`
+      + (t.duHangMuc ? ' — ĐỦ hạng mục, mời sang bàn kết luận'
+        : ` — còn ${t.conThieu.length} bàn`), 'ok');
+    hocSinhMoi();
+    veBanKham();
+  } catch (e) { loi(e); }
+}
+
+function themVaoNhatKy(t, ketLuan) {
+  state.daGhiPhien.unshift({ gio: new Date().toLocaleTimeString('vi-VN'), t, ketLuan });
+  state.daGhiPhien = state.daGhiPhien.slice(0, 8);
+  el('demDaGhi').textContent = `${state.daGhiPhien.length} lượt phiên này`;
+  el('vuaGhiCard').hidden = false;
+  $('#tblVuaGhi tbody').innerHTML = state.daGhiPhien.map((r) => `
+    <tr><td>${esc(r.gio)}</td><td>${esc(r.t.hoTen)}</td><td>${esc(r.t.lop)}</td>
+      <td>${badgeTrangThai(r.ketLuan)}</td>
+      <td>${r.t.duHangMuc ? '<span class="badge ok">đủ</span>'
+        : `<span class="badge warn">còn ${r.t.conThieu.length}</span>`}</td></tr>`).join('');
+}
+
+el('btnTimHocSinh').onclick = timHocSinh;
+el('btnBinhThuong').onclick = () => ghiKetQua('BINH_THUONG');
+
+function moGhiChu(ketLuan) {
+  if (!state.phieu) { toast('Chưa chọn học sinh', 'bad'); return; }
+  el('ghiChuBox').hidden = false;
+  el('ghiChuBox').dataset.ketLuan = ketLuan;
+  el('ghiChuKham').placeholder = ketLuan === 'CAN_THEO_DOI'
+    ? 'Cần theo dõi điều gì?' : 'Mô tả bất thường (bắt buộc)';
+  el('ghiChuKham').focus();
+}
+
+el('btnTheoDoi').onclick = () => moGhiChu('CAN_THEO_DOI');
+el('btnBatThuong').onclick = () => moGhiChu('BAT_THUONG');
+el('btnHuyBatThuong').onclick = () => { el('ghiChuBox').hidden = true; };
+el('btnXacNhanBatThuong').onclick = () => {
+  const ketLuan = el('ghiChuBox').dataset.ketLuan;
+  if (ketLuan === 'BAT_THUONG' && !el('ghiChuKham').value.trim()) {
+    toast('Ghi bất thường thì phải mô tả — bàn kết luận cần thông tin này', 'bad');
+    el('ghiChuKham').focus();
+    return;
+  }
+  ghiKetQua(ketLuan);
 };
+
+/* Bàn phím: bác sĩ không phải rời tay khỏi bàn phím giữa các học sinh. */
+el('qKham').onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); timHocSinh(); } };
+
+document.addEventListener('keydown', (e) => {
+  if (!el('tab-ban-kham').classList.contains('active') || el('khamCard').hidden) return;
+
+  // Nhiều kết quả tìm được: bấm 1..9 để chọn.
+  if (state.ketQuaTim && /^[1-9]$/.test(e.key) && document.activeElement !== el('qKham')) {
+    const t = state.ketQuaTim[Number(e.key) - 1];
+    if (t) { e.preventDefault(); chonPhieu(t); }
+    return;
+  }
+  if (e.key === 'Escape') { e.preventDefault(); hocSinhMoi(); return; }
+  if (e.altKey && ['1', '2', '3'].includes(e.key)) {
+    e.preventDefault();
+    if (e.key === '1') ghiKetQua('BINH_THUONG');
+    if (e.key === '2') moGhiChu('CAN_THEO_DOI');
+    if (e.key === '3') moGhiChu('BAT_THUONG');
+    return;
+  }
+  // Enter trong ô chỉ số = ghi bình thường (đường đi của ~85% ca).
+  if (e.key === 'Enter' && e.target.closest('#chiSoForm')) {
+    e.preventDefault();
+    ghiKetQua('BINH_THUONG');
+  }
+});
 
 /* ---------- 5. bàn kết luận ---------- */
 
