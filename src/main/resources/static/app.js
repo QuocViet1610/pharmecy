@@ -6,7 +6,12 @@ const state = { dotKham: null, truongId: null, hangMuc: [], banKham: [], phieu: 
 /* ---------- helpers ---------- */
 
 async function call(method, path, body, kieu) {
-  const opt = { method, headers: {} };
+  const opt = {
+    method,
+    // ngrok (plan free) chèn trang cảnh báo HTML vào request từ browser; header này tắt nó đi,
+    // nếu không mọi lời gọi API sẽ nhận HTML và JSON.parse báo "Unexpected token '<'".
+    headers: { 'ngrok-skip-browser-warning': 'true' },
+  };
   if (body !== undefined) {
     if (kieu === 'text') {
       opt.headers['Content-Type'] = 'text/plain;charset=UTF-8';
@@ -16,9 +21,24 @@ async function call(method, path, body, kieu) {
       opt.body = JSON.stringify(body);
     }
   }
+
   const res = await fetch(API + path, opt);
   const text = await res.text();
-  const data = text ? JSON.parse(text) : null;
+
+  let data = null;
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      // Không phải JSON: proxy/tunnel/trang đăng nhập chen vào giữa. Báo rõ thay vì lỗi parse.
+      const dau = text.trim().slice(0, 120);
+      throw Object.assign(
+        new Error(`Server trả về ${res.headers.get('content-type') || 'nội dung không rõ'} `
+          + `thay vì JSON (HTTP ${res.status}). Có thể một proxy/tunnel đang chen trang HTML vào: ${dau}`),
+        { status: res.status });
+    }
+  }
+
   if (!res.ok) throw Object.assign(new Error(data?.detail || res.statusText), { data, status: res.status });
   return data;
 }

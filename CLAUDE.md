@@ -50,5 +50,9 @@ chiếm nên project này dùng 8099.
 - `DateTimeFormatter.ofPattern("dd/MM/yyyy")` dùng ResolverStyle SMART → `31/02/2014` bị âm thầm sửa
   thành 28/02 và lỗi nhập liệu không bao giờ lộ. Phải dùng `uuuu` + `ResolverStyle.STRICT`.
 - ngrok v3.39 đã **bỏ flag `--basic-auth`** — phải cấu hình qua `--traffic-policy-file`.
+- ngrok plan free chèn **trang cảnh báo HTML** vào mọi request từ browser, kể cả `fetch` gọi API →
+  UI báo `Unexpected token '<', "<!DOCTYPE "... is not valid JSON`. Mọi `fetch` trong `app.js` phải
+  gửi header `ngrok-skip-browser-warning`. `call()` cũng bắt lỗi không-phải-JSON và báo rõ nguyên
+  nhân thay vì để lộ lỗi parse.
 - Entity trả thẳng ra JSON sẽ lỗi với quan hệ LAZY và không có setter cho Jackson — luôn map sang
   record DTO ở tầng `web`.
