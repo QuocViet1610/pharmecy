@@ -36,11 +36,16 @@
         <h2>Vòng đời đợt khám</h2>
         <p class="hint">Mỗi bước chuyển là một chốt kiểm soát: lỗi bị chặn ở nơi còn sửa được.</p>
         <ol class="flow" id="flow"></ol>
+        <div id="buocTiepTheo" class="next-step"></div>
         <div class="row">
-          <button id="btnChuanBi" class="primary">Chuẩn bị đợt khám</button>
+          <button id="btnChuanBi">Chuẩn bị đợt khám</button>
           <button id="btnXuatPhat">Xuất phát</button>
           <button id="btnBatDau">Bắt đầu khám</button>
           <button id="btnHoanThanh">Hoàn thành</button>
+        </div>
+        <p class="hint">Nút mờ là bước đã qua hoặc chưa tới — đưa chuột vào nút để xem lý do.</p>
+        <div class="row">
+          <button id="btnTaoDotKham" class="ghost">+ Tạo đợt khám mới</button>
         </div>
         <pre id="dotKhamOut" class="out"></pre>
       </div>

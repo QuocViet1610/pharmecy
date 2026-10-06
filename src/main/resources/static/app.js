@@ -147,21 +147,84 @@ const BUOC = [
   ['HOAN_THANH', 'Mọi phiếu đã kết luận → thu phiếu, lưu trữ, báo cáo'],
 ];
 
+const THU_TU_TRANG_THAI = ['NHAP', 'DANG_CHUAN_BI', 'SAN_SANG', 'DANG_KHAM', 'HOAN_THANH'];
+
+/**
+ * Nút bị khóa phải nói rõ VÌ SAO. Nút xám không kèm lý do khiến người dùng không phân biệt được
+ * "bước này đã qua" với "app hỏng".
+ * @returns {Object} id nút -> lý do khóa, hoặc null nếu nút đang dùng được
+ */
+function lyDoKhoa(tt) {
+  const i = THU_TU_TRANG_THAI.indexOf(tt);
+  return {
+    btnChuanBi: i > 1 ? 'Đợt khám đã xuất phát — không chuẩn bị lại được' : null,
+    btnXuatPhat: i < 1 ? 'Phải bấm "Chuẩn bị đợt khám" trước'
+      : i > 1 ? 'Đã xuất phát rồi' : null,
+    btnBatDau: i < 2 ? 'Phải kiểm kê đủ và bấm "Xuất phát" trước'
+      : i > 2 ? 'Đã bắt đầu khám rồi' : null,
+    btnHoanThanh: i < 3 ? 'Chỉ đóng được đợt khám khi đang khám'
+      : i > 3 ? 'Đợt khám đã hoàn thành' : null,
+  };
+}
+
 function veDotKham() {
   const d = state.dotKham;
-  el('trangThaiDot').outerHTML = `<span id="trangThaiDot" class="badge ok">${esc(d.trangThai)}</span>`;
-  const hienTai = BUOC.findIndex((b) => b[0] === d.trangThai);
+  const tt = d.trangThai;
+  el('trangThaiDot').outerHTML = `<span id="trangThaiDot" class="badge ok">${esc(tt)}</span>`;
+
+  const hienTai = BUOC.findIndex((b) => b[0] === tt);
   el('flow').innerHTML = BUOC.map(([ma, nhan], i) =>
     `<li class="${i < hienTai ? 'xong' : i === hienTai ? 'hientai' : ''}">${esc(nhan)}</li>`).join('');
   el('goiKham').innerHTML = d.hangMucBatBuoc.map((h) => `<span class="badge">${esc(h.ten)}</span>`).join('')
     + ` <span class="badge muted">${d.soPhieu} phiếu · ${d.soDaKetLuan} đã kết luận</span>`;
 
-  const tt = d.trangThai;
-  el('btnChuanBi').disabled = !(tt === 'NHAP' || tt === 'DANG_CHUAN_BI');
-  el('btnXuatPhat').disabled = tt !== 'DANG_CHUAN_BI';
-  el('btnBatDau').disabled = tt !== 'SAN_SANG';
-  el('btnHoanThanh').disabled = tt !== 'DANG_KHAM';
+  const chuaKetLuan = d.soPhieu - d.soDaKetLuan;
+  const buocKe = {
+    NHAP: 'Bấm <strong>Chuẩn bị đợt khám</strong> để sinh phiếu cho từng học sinh, dựng bàn khám '
+      + 'và tính checklist vật tư từ số học sinh thực tế.',
+    DANG_CHUAN_BI: 'Sang <strong>tab 3</strong> kiểm kê cho đủ vật tư, rồi quay lại bấm '
+      + '<strong>Xuất phát</strong>.',
+    SAN_SANG: 'Đã tới trường và setup xong các bàn thì bấm <strong>Bắt đầu khám</strong>.',
+    DANG_KHAM: `Đang khám — ghi kết quả ở <strong>tab 4</strong>, kết luận ở <strong>tab 5</strong>. `
+      + `Còn <strong>${chuaKetLuan}/${d.soPhieu}</strong> phiếu chưa kết luận; đủ hết mới đóng được đợt.`,
+    HOAN_THANH: 'Đợt khám đã kết thúc. Xem báo cáo ở <strong>tab 6</strong>, '
+      + 'hoặc bấm <strong>+ Tạo đợt khám mới</strong> để chạy lại từ đầu.',
+  };
+  el('buocTiepTheo').innerHTML = `<span class="next-label">Bước tiếp theo</span>${buocKe[tt] ?? ''}`;
+
+  // Khóa nút kèm lý do; nút duy nhất dùng được thì làm nổi bật.
+  const ly = lyDoKhoa(tt);
+  Object.entries(ly).forEach(([id, lyDo]) => {
+    const b = el(id);
+    b.disabled = !!lyDo;
+    b.title = lyDo ?? 'Bước tiếp theo của đợt khám';
+    b.classList.toggle('primary', !lyDo);
+    b.classList.toggle('da-xong', !!lyDo && THU_TU_TRANG_THAI.indexOf(tt) > viTriNut(id));
+  });
 }
+
+/** Vị trí trong vòng đời mà nút này phục vụ — dùng để biết nút đã "qua" hay "chưa tới". */
+function viTriNut(id) {
+  return { btnChuanBi: 0, btnXuatPhat: 1, btnBatDau: 2, btnHoanThanh: 3 }[id] ?? 0;
+}
+
+/** Tạo đợt khám mới để demo lại từ đầu mà không phải restart app. */
+el('btnTaoDotKham').onclick = async () => {
+  if (!state.truongId) { toast('Chưa có trường nào', 'bad'); return; }
+  if (!confirm('Tạo đợt khám mới cho toàn trường, gồm tất cả hạng mục, ngày hôm nay?')) return;
+  try {
+    const d = await post('/dot-kham', {
+      truongId: state.truongId,
+      ngayKham: new Date().toISOString().slice(0, 10),
+      hangMucBatBuoc: state.hangMuc.map((h) => h.ma),
+      lop: [],
+      ghiChu: 'Đợt khám tạo từ giao diện',
+    });
+    toast(`Đã tạo đợt khám ${d.ma}`, 'ok');
+    await khoiTao();
+    await doiDotKham(d.ma);
+  } catch (e) { loi(e, 'dotKhamOut'); }
+};
 
 async function veBanKham() {
   state.banKham = await get(`/dot-kham/${state.dotKham.ma}/ban-kham`);

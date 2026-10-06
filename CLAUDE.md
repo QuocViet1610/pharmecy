@@ -33,6 +33,9 @@ chiếm nên project này dùng 8099.
   và cập nhật lại định mức checklist.
 - Thêm hạng mục khám = thêm hằng vào enum `HangMuc` kèm danh sách `ChiSo` (nhãn, kiểu `so`/`text`,
   giá trị ví dụ); UI tự dựng form từ `GET /api/v1/dot-kham/hang-muc`, **không sửa JS**.
+- **Nút bị khóa phải nói lý do.** `lyDoKhoa(trangThai)` trong `app.js` trả lý do cho từng nút vòng đời,
+  gắn vào `title` và dòng "Bước tiếp theo". Nút xám không kèm lý do khiến người dùng không phân biệt
+  được "bước đã qua" với "app hỏng" — đã gặp thật.
 - Tab 4 là đường nóng (~375 lượt nhập/đợt). Mọi thay đổi ở đó phải giữ: bàn trực chọn một lần,
   ô tìm luôn được focus, ghi xong tự dọn và quay về ô tìm, và một nút ghi "bình thường" trong 1 click.
 - `HocSinh.hoTenTimKiem` là bản không dấu của `hoTen`, set trong constructor qua `ChuanHoaText.boDau`.

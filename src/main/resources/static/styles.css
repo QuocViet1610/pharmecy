@@ -188,3 +188,16 @@ button.bad-btn:hover { filter: brightness(.97); }
 @media (hover: none) {
   button:hover, .btn:hover, .chon-ban-item:hover { background: inherit; filter: none; }
 }
+
+/* Dòng "bước tiếp theo": nói rõ phải làm gì, thay vì để người dùng đoán qua các nút xám. */
+.next-step {
+  background: var(--accent-soft); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0;
+  padding: 11px 14px; margin: 12px 0; font-size: 13.5px; line-height: 1.55;
+}
+.next-label {
+  display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .6px;
+  color: var(--accent); font-weight: 700; margin-bottom: 3px;
+}
+/* Nút của bước đã hoàn thành: vẫn mờ nhưng có dấu hiệu "đã xong", không giống nút chưa tới. */
+button.da-xong { border-left: 3px solid var(--ok); opacity: .6; }
+button.da-xong::before { content: "✓ "; color: var(--ok); }

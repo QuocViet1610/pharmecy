@@ -96,6 +96,10 @@ vào DB** — mục đích là sửa với nhà trường trước ngày khám.
 **③ Tab 1 — Đợt khám.** *Xuất phát* → *Bắt đầu khám*. Thử bấm *Xuất phát* khi còn thiếu: bị chặn
 kèm đúng danh sách còn thiếu.
 
+> Mỗi trạng thái chỉ có **một** nút dùng được, nút đó được tô đậm. Các nút khác bị khóa và **đưa chuột
+> vào sẽ hiện lý do** ("đã xuất phát rồi", "phải Chuẩn bị trước"…). Dòng *Bước tiếp theo* màu xanh
+> luôn nói rõ phải làm gì. Muốn chạy lại luồng từ đầu: bấm **+ Tạo đợt khám mới**.
+
 **④ Tab 4 — Bàn khám.** Chọn một bàn trực → gõ `duc long` (không cần dấu) hoặc `nguyen` → Enter.
 Ghi kết quả bằng nút *Bình thường*. Cứ đổi bàn theo thứ tự tùy ý — đây là nguyên tắc **khám tự do**.
 
